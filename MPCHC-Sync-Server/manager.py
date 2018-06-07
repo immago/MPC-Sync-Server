@@ -46,10 +46,10 @@ class Manager:
             # Check if playing
             if value.state == State.Playing:
                 if value.position < value.duration:
-                    value.position += 1;
+                    value.position += 1.0;
 
                 #temp
-                self.callSessionCallbacks(key)
+                #self.callSessionCallbacks(key)
     
     # User api
     # Set session data

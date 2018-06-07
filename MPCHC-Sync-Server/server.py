@@ -15,7 +15,8 @@ def callbackFunction(data: Data, callback: Callback):
     if type(callback.payload) is socket.socket:
         client: socket = callback.payload;
         try:
-            send_msg(client, data.jsonValue())
+            msg = json.dumps({'status': 'ok', 'new_data' : data.dictValue()})
+            send_msg(client, msg)
         except: 
             manager.unsubscribe(callback)
 
@@ -103,7 +104,7 @@ def on_new_client(clientsocket, addr):
                     
                     #remove old callback
                     if(subscribeCallback is not None):
-                        manager.unsubscribe(subscribeCallback)
+                        manager.unsubscribe(identifer, subscribeCallback)
 
                     subscribeCallback = Callback(callbackFunction, clientsocket) 
                     manager.subscribe(identifer, subscribeCallback)
@@ -125,13 +126,13 @@ def on_new_client(clientsocket, addr):
                          continue
 
                     if 'duration' in responce:
-                         duration = int(responce['duration'])
+                         duration = float(responce['duration'])
                     else:
                          send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'No duration', 'code': '6'}))
                          continue
 
                     if 'position' in responce:
-                         position = int(responce['position'])
+                         position = float(responce['position'])
                     else:
                          send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'No position', 'code': '7'}))
                          continue

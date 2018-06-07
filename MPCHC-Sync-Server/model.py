@@ -16,6 +16,9 @@ class Data:
         self.state = state
         self.calbacks = callbacks
         
+    def dictValue(self):
+        return {'file': self.file, 'duration': self.duration, 'position': self.position, 'state': self.state}
+
     def jsonValue(self):
         return json.dumps({'file': self.file, 'duration': self.duration, 'position': self.position, 'state': self.state})
 
