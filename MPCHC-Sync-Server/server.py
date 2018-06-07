@@ -9,11 +9,18 @@ import struct
 SECRET_TOKEN = '86de0ff4-3115-4385-b485-b5e83ae6b890'
 manager = Manager()
 
-# Debug
+# Callback
 def callbackFunction(data: Data, callback: Callback):
 
     if type(callback.payload) is socket.socket:
         client: socket = callback.payload;
+
+        # if no data (subscribe failed)
+        if data is None:
+            send_msg(client, json.dumps({'status': 'error', 'description': 'Session not found', 'code': '9'}))
+            return
+
+        # else send data
         try:
             msg = json.dumps({'status': 'ok', 'new_data' : data.dictValue()})
             send_msg(client, msg)
@@ -114,7 +121,11 @@ def on_new_client(clientsocket, addr):
                 # Get info
                 if(command == 'get'):
                      print('Client ' + str(addr) + "get ifo about " + identifer)
-                     send_msg(clientsocket, manager.get(identifer).jsonValue())
+                     data =  manager.get(identifer)
+                     if data is None:
+                         send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'Session not found', 'code': '9'}))
+                     else:
+                        send_msg(clientsocket, data.jsonValue())
 
                 # Set info
                 if(command == 'set'):

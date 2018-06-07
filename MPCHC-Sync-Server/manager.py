@@ -85,7 +85,8 @@ class Manager:
 
         # create session of not exist
         if identifer not in self.sessions:
-            self.set(identifer, Data("", 0, 0, State.Closed))
+            callback.function(None, callback)
+            return
 
         self.sessions[identifer].calbacks.append(callback)
 
