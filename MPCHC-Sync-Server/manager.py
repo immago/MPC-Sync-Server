@@ -7,7 +7,6 @@ class Manager:
     def __init__(self):
         self.stopEvent = Event()
         self.sessions = {} # Dict {session identifer: Data}; All sessions (rooms, videos)
-        self.callbacks = [] # Array [Callback, ...]; Callbacks of subscribed users
         self.sessionsThread = None
         self.updateSessionsThread()
 
@@ -36,19 +35,21 @@ class Manager:
 
     # Called by updateSessionsThread one time per second
     def threadTick(self):
-        for key, value in self.sessions.items():
+        for key, value in list(self.sessions.items()):
             value: Data = value
+
+            # Remove if no listeners
+            if len(value.calbacks) == 0:
+                print('No listeners for session ' +  key + ' remove...')
+                self.sessions.pop(key, None)
+
             # Check if playing
             if value.state == State.Playing:
-                value.position += 1;
+                if value.position < value.duration:
+                    value.position += 1;
 
                 #temp
                 self.callSessionCallbacks(key)
-
-                # Remove from sessions if ended 
-                if value.position >= value.duration:
-                    self.sessions.pop(key, None)
-                    self.updateSessionsThread()
     
     # User api
     # Set session data
@@ -56,6 +57,8 @@ class Manager:
         self.sessions[identifer] = data;
         self.updateSessionsThread()
         self.callSessionCallbacks(identifer)
+
+
 
     # Get session data
     def get(self, identifer):
@@ -65,20 +68,33 @@ class Manager:
         else:
             return None
 
+
+
     # Trigger callback for session
     def callSessionCallbacks(self, identifer):
-        for callback in self.callbacks:
-            callback: Callback = callback
-            if callback.identifer == identifer:
+
+        if identifer in self.sessions:
+            for callback in self.sessions[identifer].calbacks:
+                callback: Callback = callback
                 callback.function(self.sessions[identifer], callback)
                
+
+
     # Subscribe on session update
-    def subscribe(self, callback: Callback):
-        self.callbacks.append(callback)
+    def subscribe(self, identifer, callback: Callback):
+
+        # create session of not exist
+        if identifer not in self.sessions:
+            self.set(identifer, Data("", 0, 0, State.Closed))
+
+        self.sessions[identifer].calbacks.append(callback)
+
+
 
     # Unsubscribe from session update
-    def unsubscribe(self, callback):
-        self.callbacks.remove(callback)
+    def unsubscribe(self, identifer, callback):
+        if identifer in self.sessions:
+            self.sessions[identifer].calbacks.remove(callback)
 
 
 # Update

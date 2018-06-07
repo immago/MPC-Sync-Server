@@ -9,17 +9,17 @@ class State(IntEnum):
 
 
 class Data:
-    def __init__(self, file, duration, position, state):
+    def __init__(self, file, duration, position, state, callbacks = []):
         self.file = file
         self.duration = duration
         self.position = position
         self.state = state
+        self.calbacks = callbacks
         
     def jsonValue(self):
         return json.dumps({'file': self.file, 'duration': self.duration, 'position': self.position, 'state': self.state})
 
 class Callback:
-    def __init__(self, identifer, function, payload = None):
-        self.identifer = identifer # session identifer
+    def __init__(self, function, payload = None):
         self.function = function # callback function
         self.payload = payload # payload (ex. for communication data)

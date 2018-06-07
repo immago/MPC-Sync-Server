@@ -105,8 +105,8 @@ def on_new_client(clientsocket, addr):
                     if(subscribeCallback is not None):
                         manager.unsubscribe(subscribeCallback)
 
-                    subscribeCallback = Callback(identifer, callbackFunction, clientsocket) 
-                    manager.subscribe(subscribeCallback)
+                    subscribeCallback = Callback(callbackFunction, clientsocket) 
+                    manager.subscribe(identifer, subscribeCallback)
                     print('Client ' + str(addr) + "subscribed " + identifer)
                     send_msg(clientsocket, json.dumps({'status': 'ok', 'code': '0'}))
 
@@ -150,7 +150,7 @@ def on_new_client(clientsocket, addr):
 
     # Force unsubscribe
     if(subscribeCallback is not None):
-        manager.unsubscribe(subscribeCallback)
+        manager.unsubscribe(identifer, subscribeCallback)
 
     clientsocket.close()
 
