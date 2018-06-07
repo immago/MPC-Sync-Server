@@ -115,12 +115,12 @@ def on_new_client(clientsocket, addr):
 
                     subscribeCallback = Callback(callbackFunction, clientsocket) 
                     manager.subscribe(identifer, subscribeCallback)
-                    print('Client ' + str(addr) + "subscribed " + identifer)
+                    print('Client ' + str(addr) + " subscribed " + identifer)
                     send_msg(clientsocket, json.dumps({'status': 'ok', 'code': '0'}))
 
                 # Get info
                 if(command == 'get'):
-                     print('Client ' + str(addr) + "get ifo about " + identifer)
+                     print('Client ' + str(addr) + " get ifo about " + identifer)
                      data =  manager.get(identifer)
                      if data is None:
                          send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'Session not found', 'code': '9'}))
@@ -154,7 +154,7 @@ def on_new_client(clientsocket, addr):
                          send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'No state', 'code': '8'}))
                          continue
 
-                    print('Client ' + str(addr) + "set info " + identifer)
+                    print('Client ' + str(addr) + " set info " + identifer)
                     manager.set(identifer, Data(file, duration, position, state))
                     send_msg(clientsocket, json.dumps({'status': 'ok', 'code': '0'}))
 
