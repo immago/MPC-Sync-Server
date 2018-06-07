@@ -70,11 +70,11 @@ class Manager:
         for callback in self.callbacks:
             callback: Callback = callback
             if callback.identifer == identifer:
-                callback.function(self.sessions[identifer])
+                callback.function(self.sessions[identifer], callback)
                
     # Subscribe on session update
-    def subscribe(self, identifer, callback):
-        self.callbacks.append(Callback(identifer, callback))
+    def subscribe(self, callback: Callback):
+        self.callbacks.append(callback)
 
     # Unsubscribe from session update
     def unsubscribe(self, callback):

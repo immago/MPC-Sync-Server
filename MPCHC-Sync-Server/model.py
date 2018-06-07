@@ -19,6 +19,7 @@ class Data:
         return json.dumps({'file': self.file, 'duration': self.duration, 'position': self.position, 'state': self.state})
 
 class Callback:
-    def __init__(self, identifer, function):
-        self.identifer = identifer
-        self.function = function
+    def __init__(self, identifer, function, payload = None):
+        self.identifer = identifer # session identifer
+        self.function = function # callback function
+        self.payload = payload # payload (ex. for communication data)

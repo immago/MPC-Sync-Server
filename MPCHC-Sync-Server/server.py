@@ -1,4 +1,4 @@
-from model import Data, State
+from model import Data, State, Callback
 from manager import Manager
 import json
 import socket
@@ -10,42 +10,16 @@ SECRET_TOKEN = '86de0ff4-3115-4385-b485-b5e83ae6b890'
 manager = Manager()
 
 # Debug
-def callback(data: Data):
-    print(data.position)
+def callbackFunction(data: Data, callback: Callback):
 
-#def process(command):
-    
-#    # Parse
-#    try:
-#        responce = json.loads(msg)
-#    except ValueError:
-#        send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'Not valid JSON', 'code': '1'}))
-#        return
-        
-#    # Access variables
-#    if 'token' in responce:
-#        token = responce['token']
+    if type(callback.payload) is socket.socket:
+        client: socket = callback.payload;
+        try:
+            send_msg(client, data.jsonValue())
+        except: 
+            manager.unsubscribe(callback)
 
-#    if 'identifer' in responce:
-#        identifer = responce['identifer']
 
-#    if token is None:
-#        send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'No token', 'code': '2'}))
-#        return
-
-#    if identifer is None:
-#        send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'No identifer', 'code': '3'}))
-#        return
-
-#    if token != SECRET_TOKEN:
-#        send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'Wrong token', 'code': '4'}))
-#        return
-
-#    if 'command' in responce:
-#        command = responce['command']
-
-#        if(command == 'subscribe'):
-#            manager.subscribe(identifer, callback)
 
 # Socket messages
 
@@ -54,25 +28,6 @@ def send_msg(sock, msg):
     msg = msg.encode("utf-8")
     sock.sendall(msg)
 
-# Read message length and unpack it into an integer
-#def recv_msg(sock):
-#    raw_msglen = recvall(sock, 4)
-#    if not raw_msglen:
-#        return None
-#    msglen = struct.unpack('>I', raw_msglen)[0]
-#    # Read the message data
-#    return recvall(sock, msglen)
-
-## Helper function to recv n bytes or return None if EOF is hit
-#def recvall(sock, n):
-#    data = b''
-#    while len(data) < n:
-#        packet = sock.recv(n - len(data))
-#        if not packet:
-#            return None
-#        data += packet
-#    return data
-
 def recv_msg(sock):
     BUFF_SIZE = 4096 # 4 KiB
     data = b''
@@ -80,7 +35,7 @@ def recv_msg(sock):
         
         try:
             part = sock.recv(BUFF_SIZE)
-        except ValueError:
+        except:
             return None
 
         data += part
@@ -92,10 +47,11 @@ def recv_msg(sock):
 # Client thread
 def on_new_client(clientsocket, addr):
     
+    print('Client connected: ' + str(addr))
+
     identifer = None #session identifer
     token = None #access token
-
-    #send_msg(clientsocket, 'TEST')
+    subscribeCallback = None
 
     while True:
 
@@ -111,8 +67,6 @@ def on_new_client(clientsocket, addr):
             # skip empty command
             if(len(command) == 0):
                 continue
-
-            print(command)
 
             # Parse
             try:
@@ -140,50 +94,66 @@ def on_new_client(clientsocket, addr):
                 send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'Wrong token', 'code': '4'}))
                 continue
 
-
+            # Commands
             if 'command' in responce:
                 command = responce['command']
 
+                # Subscribe
                 if(command == 'subscribe'):
-                    manager.subscribe(identifer, callback)
-    
+                    
+                    #remove old callback
+                    if(subscribeCallback is not None):
+                        manager.unsubscribe(subscribeCallback)
+
+                    subscribeCallback = Callback(identifer, callbackFunction, clientsocket) 
+                    manager.subscribe(subscribeCallback)
+                    print('Client ' + str(addr) + "subscribed " + identifer)
+                    send_msg(clientsocket, json.dumps({'status': 'ok', 'code': '0'}))
+
+                # Get info
+                if(command == 'get'):
+                     print('Client ' + str(addr) + "get ifo about " + identifer)
+                     send_msg(clientsocket, manager.get(identifer).jsonValue())
+
+                # Set info
+                if(command == 'set'):
+
+                    if 'file' in responce:
+                         file = responce['file']
+                    else:
+                         send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'No file', 'code': '5'}))
+                         continue
+
+                    if 'duration' in responce:
+                         duration = int(responce['duration'])
+                    else:
+                         send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'No duration', 'code': '6'}))
+                         continue
+
+                    if 'position' in responce:
+                         position = int(responce['position'])
+                    else:
+                         send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'No position', 'code': '7'}))
+                         continue
+
+                    if 'state' in responce:
+                         state = int(responce['state'])
+                    else:
+                         send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'No state', 'code': '8'}))
+                         continue
+
+                    print('Client ' + str(addr) + "set info " + identifer)
+                    manager.set(identifer, Data(file, duration, position, state))
+                    send_msg(clientsocket, json.dumps({'status': 'ok', 'code': '0'}))
+
+    print('Client disconnected: ' + str(addr))
+
+    # Force unsubscribe
+    if(subscribeCallback is not None):
+        manager.unsubscribe(subscribeCallback)
+
     clientsocket.close()
 
-#class ThreadedServer(object):
-#    def __init__(self, host, port):
-#        self.host = host
-#        self.port = port
-#        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-#        self.sock.bind((self.host, self.port))
-
-#    def listen(self):
-#        self.sock.listen(500)
-#        while True:
-#            client, address = self.sock.accept()
-#            client.settimeout(60)
-#            threading.Thread(target = self.listenToClient, args = (client,address)).start()
-
-#    def listenToClient(self, client, address):
-#        size = 1024
-#        while True:
-#            try:
-#                data = client.recv(size)
-#                if data:
-#                    # Set the response to echo back the recieved data 
-#                    print(data)
-#                    response = 'hello world'
-#                    client.send(response)
-#                else:
-#                    raise error('Client disconnected')
-#            except:
-#                client.close()
-#                return False
-
-#if __name__ == "__main__":
-#    host = socket.gethostname()
-#    port = 5000
-#    ThreadedServer(host, port).listen()
 
 if __name__ == '__main__':
     #manager.set('123', Data('test.mpg', 3600, 1, State.Playing))
@@ -200,7 +170,6 @@ if __name__ == '__main__':
 
     while True:
        c, addr = s.accept()     # Establish connection with client.
-       #thread.start_new_thread(on_new_client,(c,addr))
        threading.Thread(target = on_new_client, args = (c,addr)).start()
 
     s.close()
