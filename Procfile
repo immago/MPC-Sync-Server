@@ -1,1 +1,1 @@
-web: python MPCHC-Sync-Server\server.py
+web: python MPCHC-Sync-Server/server.py
