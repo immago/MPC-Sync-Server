@@ -113,7 +113,7 @@ def on_new_client(clientsocket, addr):
                      if data is None:
                          send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'Session not found', 'code': '9'}))
                      else:
-                        send_msg(clientsocket, data.jsonValue())
+                        send_msg(clientsocket, json.dumps({'status': 'ok', 'new_data' : data.dictValue()}))
 
 
                 # Subscribe
