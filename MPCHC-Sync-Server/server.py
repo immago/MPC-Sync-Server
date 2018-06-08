@@ -177,15 +177,12 @@ if __name__ == '__main__':
     
 
     # Get port
-    ON_HEROKU = os.environ.get('ON_HEROKU')
-    if ON_HEROKU:
-        port = int(os.environ.get('PORT', 17995))  # as per OP comments default is 17995
+    if "PORT" in os.environ:
+        port = int(os.environ.get('PORT'))
     else:
         port = 5000
 
-    #s = socket.socket()
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s = socket.socket()
     host = socket.gethostname()
     s.bind((host, port)) 
     s.listen(500)

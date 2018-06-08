@@ -1,1 +1,0 @@
-web: python MPCHC-Sync-Server/server.py
