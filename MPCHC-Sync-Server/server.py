@@ -66,7 +66,7 @@ def on_new_client(clientsocket, addr):
         msg = recv_msg(clientsocket)
 
         # Check connection
-        if(msg is None):
+        if(msg is None or len(msg) == 0):
             break
 
         coomnds = msg.split('<EOF>')
@@ -106,18 +106,6 @@ def on_new_client(clientsocket, addr):
             if 'command' in responce:
                 command = responce['command']
 
-                # Subscribe
-                if(command == 'subscribe'):
-                    
-                    #remove old callback
-                    if(subscribeCallback is not None):
-                        manager.unsubscribe(identifer, subscribeCallback)
-
-                    subscribeCallback = Callback(callbackFunction, clientsocket) 
-                    manager.subscribe(identifer, subscribeCallback)
-                    print('Client ' + str(addr) + " subscribed " + identifer)
-                    send_msg(clientsocket, json.dumps({'status': 'ok', 'code': '0'}))
-
                 # Get info
                 if(command == 'get'):
                      print('Client ' + str(addr) + " get ifo about " + identifer)
@@ -126,6 +114,19 @@ def on_new_client(clientsocket, addr):
                          send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'Session not found', 'code': '9'}))
                      else:
                         send_msg(clientsocket, data.jsonValue())
+
+
+                # Subscribe
+                if(command == 'subscribe' or command == 'host'):
+                    
+                    #remove old callback
+                    if(subscribeCallback is not None):
+                        manager.unsubscribe(identifer, subscribeCallback)
+
+                    subscribeCallback = Callback(callbackFunction, clientsocket) 
+                    manager.subscribe(identifer, subscribeCallback, (command == 'host'))
+                    print('Client ' + str(addr) + " subscribed " + identifer)
+                    send_msg(clientsocket, json.dumps({'status': 'ok', 'code': '0'}))
 
                 # Set info
                 if(command == 'set'):
@@ -165,7 +166,6 @@ def on_new_client(clientsocket, addr):
         manager.unsubscribe(identifer, subscribeCallback)
 
     clientsocket.close()
-
 
 if __name__ == '__main__':
     #manager.set('123', Data('test.mpg', 3600, 1, State.Playing))

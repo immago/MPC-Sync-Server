@@ -81,12 +81,18 @@ class Manager:
 
 
     # Subscribe on session update
-    def subscribe(self, identifer, callback: Callback):
+    def subscribe(self, identifer, callback: Callback, host: bool):
 
         # create session of not exist
         if identifer not in self.sessions:
-            callback.function(None, callback)
-            return
+
+            if host:
+                # create session, it will be updated later by set
+                self.set(identifer, Data("", 0, 0, State.Closed))
+            else:
+                # throw no session error
+                callback.function(None, callback)
+                return
 
         self.sessions[identifer].calbacks.append(callback)
 
@@ -94,7 +100,7 @@ class Manager:
 
     # Unsubscribe from session update
     def unsubscribe(self, identifer, callback):
-        if identifer in self.sessions:
+        if identifer in self.sessions and callback in self.sessions[identifer].calbacks:
             self.sessions[identifer].calbacks.remove(callback)
 
 
