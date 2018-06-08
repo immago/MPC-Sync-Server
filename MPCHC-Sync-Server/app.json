@@ -1,0 +1,7 @@
+{
+  "name": "MPC-HC-Sync server",
+  "description": "Media Player Classic sync backend",
+  "image": "heroku/python",
+  "repository": "https://github.com/immago/MPCHC-Sync-Server",
+  "keywords": ["python"]
+}

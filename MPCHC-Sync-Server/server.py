@@ -4,6 +4,7 @@ import json
 import socket
 import threading
 import struct
+import os
 
 # Secret token
 SECRET_TOKEN = '86de0ff4-3115-4385-b485-b5e83ae6b890'
@@ -168,15 +169,24 @@ def on_new_client(clientsocket, addr):
     clientsocket.close()
 
 if __name__ == '__main__':
-    #manager.set('123', Data('test.mpg', 3600, 1, State.Playing))
-    #manager.subscribe('123', callback)
 
-    s = socket.socket()         # Create a socket object
-    host = socket.gethostname() # Get local machine name
-    port = 5000                 # Reserve a port for your service.
-    s.bind((host, port))        # Bind to the port
+    # Update token from env
+    if "SECRET_TOKEN" in os.environ:
+        SECRET_TOKEN = os.environ.get('SECRET_TOKEN')
+        print('Update token from env')
+    
 
-    s.listen(500)               # Now wait for client connection.
+    # Get port
+    ON_HEROKU = os.environ.get('ON_HEROKU')
+    if ON_HEROKU:
+        port = int(os.environ.get('PORT', 17995))  # as per OP comments default is 17995
+    else:
+        port = 5000
+
+    s = socket.socket()
+    host = socket.gethostname()
+    s.bind((host, port)) 
+    s.listen(500)
 
     print('Listen on ' + str(port))
 
