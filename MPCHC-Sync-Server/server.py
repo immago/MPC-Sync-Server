@@ -62,8 +62,9 @@ def on_new_client(clientsocket, addr):
     identifer = None #session identifer
     token = None #access token
     subscribeCallback = None
+    disconnect = False
 
-    while True:
+    while not disconnect:
 
         msg = recv_msg(clientsocket)
 
@@ -83,7 +84,8 @@ def on_new_client(clientsocket, addr):
                 responce = json.loads(msg)
             except ValueError:
                 send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'Not valid JSON', 'code': '1'}))
-                continue
+                disconnect = True
+                break #disconnect user
         
             # Access variables
             if 'token' in responce:
@@ -94,14 +96,16 @@ def on_new_client(clientsocket, addr):
 
             if token is None:
                 send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'No token', 'code': '2'}))
-                continue
-
-            if identifer is None:
-                send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'No identifer', 'code': '3'}))
-                continue
+                disconnect = True
+                break #disconnect user
 
             if token != SECRET_TOKEN:
                 send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'Wrong token', 'code': '4'}))
+                disconnect = True
+                break #disconnect user
+
+            if identifer is None:
+                send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'No identifer', 'code': '3'}))
                 continue
 
             # Commands
@@ -186,7 +190,7 @@ if __name__ == '__main__':
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     host = socket.gethostname()
     s.bind((host, port)) 
-    s.listen(500)
+    s.listen(100)
 
     logger.info('Listen on ' + str(port))
 
