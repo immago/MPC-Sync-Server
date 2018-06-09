@@ -1,6 +1,6 @@
 from model import Data, State, Callback
 from threading import Thread, Event
-
+from logger import logger
 
 class Manager:
 
@@ -40,7 +40,7 @@ class Manager:
 
             # Remove if no listeners
             if len(value.calbacks) == 0:
-                print('No listeners for session ' +  key + ' remove...')
+                logger.info('No listeners for session ' +  key + ' remove...')
                 self.sessions.pop(key, None)
 
             # Check if playing

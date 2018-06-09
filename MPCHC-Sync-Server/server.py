@@ -5,26 +5,11 @@ import socket
 import threading
 import struct
 import os
-import logging
-import sys
+from logger import logger
 
 # Secret token
 SECRET_TOKEN = '86de0ff4-3115-4385-b485-b5e83ae6b890'
 manager = Manager()
-
-# logging
-def setup_custom_logger(name):
-    formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s',
-                                  datefmt='%Y-%m-%d %H:%M:%S')
-    handler = logging.FileHandler('log.txt', mode='w')
-    handler.setFormatter(formatter)
-    screen_handler = logging.StreamHandler(stream=sys.stdout)
-    screen_handler.setFormatter(formatter)
-    logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(handler)
-    logger.addHandler(screen_handler)
-    return logger
 
 # Callback
 def callbackFunction(data: Data, callback: Callback):
@@ -185,9 +170,6 @@ def on_new_client(clientsocket, addr):
     clientsocket.close()
 
 if __name__ == '__main__':
-
-    # Logging
-    logger = setup_custom_logger('myapp')
 
     # Update token from env
     if "SECRET_TOKEN" in os.environ:
