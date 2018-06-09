@@ -172,14 +172,14 @@ def on_new_client(clientsocket, addr):
 if __name__ == '__main__':
 
     # Update token from env
-    if "SECRET_TOKEN" in os.environ:
-        SECRET_TOKEN = os.environ.get('SECRET_TOKEN')
+    if "MPCHC_SYNC_SECRET_TOKEN" in os.environ:
+        SECRET_TOKEN = os.environ.get('MPCHC_SYNC_SECRET_TOKEN')
         logger.info('Update token from env')
     
 
     # Get port
-    if "PORT" in os.environ:
-        port = int(os.environ.get('PORT'))
+    if "MPCHC_SYNC_PORT" in os.environ:
+        port = int(os.environ.get('MPCHC_SYNC_PORT'))
     else:
         port = 5000
 
