@@ -5,10 +5,26 @@ import socket
 import threading
 import struct
 import os
+import logging
+import sys
 
 # Secret token
 SECRET_TOKEN = '86de0ff4-3115-4385-b485-b5e83ae6b890'
 manager = Manager()
+
+# logging
+def setup_custom_logger(name):
+    formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s',
+                                  datefmt='%Y-%m-%d %H:%M:%S')
+    handler = logging.FileHandler('log.txt', mode='w')
+    handler.setFormatter(formatter)
+    screen_handler = logging.StreamHandler(stream=sys.stdout)
+    screen_handler.setFormatter(formatter)
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(handler)
+    logger.addHandler(screen_handler)
+    return logger
 
 # Callback
 def callbackFunction(data: Data, callback: Callback):
@@ -56,7 +72,7 @@ def recv_msg(sock):
 # Client thread
 def on_new_client(clientsocket, addr):
     
-    print('Client connected: ' + str(addr))
+    logger.info('Client connected: ' + str(addr))
 
     identifer = None #session identifer
     token = None #access token
@@ -109,7 +125,7 @@ def on_new_client(clientsocket, addr):
 
                 # Get info
                 if(command == 'get'):
-                     print('Client ' + str(addr) + " get ifo about " + identifer)
+                     logger.info('Client ' + str(addr) + " get ifo about " + identifer)
                      data =  manager.get(identifer)
                      if data is None:
                          send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'Session not found', 'code': '9'}))
@@ -126,7 +142,7 @@ def on_new_client(clientsocket, addr):
 
                     subscribeCallback = Callback(callbackFunction, clientsocket) 
                     manager.subscribe(identifer, subscribeCallback, (command == 'host'))
-                    print('Client ' + str(addr) + " subscribed " + identifer)
+                    logger.info('Client ' + str(addr) + " subscribed " + identifer)
                     send_msg(clientsocket, json.dumps({'status': 'ok', 'code': '0'}))
 
                 # Set info
@@ -156,11 +172,11 @@ def on_new_client(clientsocket, addr):
                          send_msg(clientsocket, json.dumps({'status': 'error', 'description': 'No state', 'code': '8'}))
                          continue
 
-                    print('Client ' + str(addr) + " set info " + identifer)
+                    logger.info('Client ' + str(addr) + " set info " + identifer)
                     manager.set(identifer, Data(file, duration, position, state))
                     send_msg(clientsocket, json.dumps({'status': 'ok', 'code': '0'}))
 
-    print('Client disconnected: ' + str(addr))
+    logger.info('Client disconnected: ' + str(addr))
 
     # Force unsubscribe
     if(subscribeCallback is not None):
@@ -170,10 +186,13 @@ def on_new_client(clientsocket, addr):
 
 if __name__ == '__main__':
 
+    # Logging
+    logger = setup_custom_logger('myapp')
+
     # Update token from env
     if "SECRET_TOKEN" in os.environ:
         SECRET_TOKEN = os.environ.get('SECRET_TOKEN')
-        print('Update token from env')
+        logger.info('Update token from env')
     
 
     # Get port
@@ -187,7 +206,7 @@ if __name__ == '__main__':
     s.bind((host, port)) 
     s.listen(500)
 
-    print('Listen on ' + str(port))
+    logger.info('Listen on ' + str(port))
 
     while True:
        c, addr = s.accept()     # Establish connection with client.
