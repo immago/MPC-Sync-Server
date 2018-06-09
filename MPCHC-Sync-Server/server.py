@@ -183,7 +183,7 @@ if __name__ == '__main__':
     else:
         port = 5000
 
-    s = socket.socket()
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     host = socket.gethostname()
     s.bind((host, port)) 
     s.listen(500)
